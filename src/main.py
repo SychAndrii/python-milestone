@@ -6,12 +6,12 @@
 #     Language:  Python. Libraries used: sortedcontainers, argparse
 #   To Compile:
 #              - Install virtual environment support: 
-#                   pip install venv
+#                   python -m venv venv
 #              - Activate virtual environment:
 #                   Windows: venv\Scripts\activate.bat
-#                   Linux/Mac: source venv/bin/activate
+#                   Linux: source venv/bin/activate
 #              - Install dependencies: pip install -r requirements.txt
-#              - Run the program: python -m src.main (see this file for flag details)
+#              - Run the program: python -m src.main -h
 #        Class:  DPI912NSA
 #    Professor:  Harvey Kaduri
 #     Due Date:  2025-05-12
