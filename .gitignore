@@ -1,0 +1,15 @@
+# Ignore virtual environment folders
+venv/
+Include/
+Lib/
+Scripts/
+
+# Ignore Python cache + compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Track src folder and requirements file
+!src/
+!requirements.txt
