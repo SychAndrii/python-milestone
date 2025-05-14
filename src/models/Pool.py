@@ -45,7 +45,7 @@ class Pool:
         selected = []
 
         for _ in range(self.pickCount):
-            index = random.randint(0, len(pool) - 1)  # pick random index
-            selected.append(pool.pop(index))          # remove from pool and append
+            index = random.randint(0, len(pool) - 1)
+            selected.append(pool.pop(index))
 
         return selected
