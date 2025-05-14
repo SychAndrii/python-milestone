@@ -41,8 +41,11 @@ class Pool:
         Returns:
             A list of unique randomly selected integers within the pool's range.
         """
-        numbers = random.sample(
-            range(self.startNumber, self.endNumber + 1),
-            self.pickCount
-        )
-        return numbers
+        pool = list(range(self.startNumber, self.endNumber + 1))
+        selected = []
+
+        for _ in range(self.pickCount):
+            index = random.randint(0, len(pool) - 1)  # pick random index
+            selected.append(pool.pop(index))          # remove from pool and append
+
+        return selected
