@@ -114,11 +114,11 @@ def main():
         "lottario": LotteryType.LOTTARIO
     }
 
-    selected_type = typeMapping[args.t]
+    selectedType = typeMapping[args.t]
     service = TicketService()
 
     for i in range(1, args.n + 1):
-        ticket = service.generateTicket(selected_type)
+        ticket = service.generateTicket(selectedType)
         print(ticket)
 
 if __name__ == "__main__":
