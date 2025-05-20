@@ -13,3 +13,6 @@ __pycache__/
 # Track src folder and requirements file
 !src/
 !requirements.txt
+
+# Ignore responses set from the ticket service
+/src/client/responses/

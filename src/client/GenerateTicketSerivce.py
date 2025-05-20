@@ -34,8 +34,9 @@ class GenerateTicketService:
 
     def handleResponse(self, request, response):
         """
-        Handle the server response. If it's valid, save it to a file named ticket_<requestId>.txt
-        in the current working directory. Otherwise, print an error message.
+        Handle the server response. If it's valid, save it to a file named 
+        ticket_<requestId>.txt inside a "responses" folder located in the same directory as this file.
+        Otherwise, print an error message.
 
         Args:
             request (dict): The original request object containing 'requestId'.
@@ -55,8 +56,12 @@ class GenerateTicketService:
             self.loggerService.printError("No file was created due to server-side error:")
             self.loggerService.printError(message)
         else:
+            currentDir = os.path.dirname(os.path.abspath(__file__))
+            responseDir = os.path.join(currentDir, 'responses')
+            if not os.path.exists(responseDir):
+                os.makedirs(responseDir)
             filename = f"ticket_{requestId}.txt"
-            filepath = os.path.join(os.getcwd(), filename)
+            filepath = os.path.join(responseDir, filename)
             with open(filepath, "w") as f:
                 f.write(response)
             self.loggerService.printInfo(f"Response saved to {filepath}")

@@ -60,6 +60,7 @@ class ConnectionService:
         """
         while True:
             try:
+                self.logger.clear()
                 if port is None:
                     port = self.__getValidPort()
                 ip = "localhost"
