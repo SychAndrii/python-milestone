@@ -33,6 +33,11 @@ class Daemon(object):
 
     def _handlerSIGTERM(self, signum, frame):
         self._daemonRunning = False
+        if hasattr(self, "sock"):
+            try:
+                self.sock.close()
+            except Exception:
+                pass
 
     def _handlerReExec(self, signum, frame):
         self.signalReload = True

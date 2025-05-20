@@ -75,7 +75,7 @@ class ConnectionService:
                 try:
                     input("Press Enter to try again...")
                 except KeyboardInterrupt:
-                    self.logger.printError("\nCancelled by user.")
+                    self.logger.printInfo("\nCancelled by user.")
                     sys.exit(1)
                 self.logger.clear()
                 port = None
