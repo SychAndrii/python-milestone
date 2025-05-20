@@ -2,6 +2,7 @@ import os
 import pwd
 import grp
 import time
+import fcntl
 import psutil
 import signal
 import sys
@@ -30,6 +31,28 @@ class Daemon(object):
         self.STDERR = STDERR
         self.pidFile = pidFile
         self.newUID, self.newGID = self.__getUserAndGroupIDs(username, groupname)
+
+    def _lock_pid_file(self):
+        self.pidfile_fd = open(self.pidFile, 'w+')
+
+        try:
+            fcntl.flock(self.pidfile_fd.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise RuntimeError("Another instance of the daemon is already running.")
+        
+        self.pidfile_fd.seek(0)
+        self.pidfile_fd.truncate()
+        self.pidfile_fd.write(str(os.getpid()))
+        self.pidfile_fd.flush()
+
+    def _release_pid_file(self):
+        if self.pidfile_fd:
+            try:
+                fcntl.flock(self.pidfile_fd.fileno(), fcntl.LOCK_UN)
+                self.pidfile_fd.close()
+                os.remove(self.pidFile)
+            except Exception as e:
+                print(f"Error releasing PID file: {e}")
 
     def _handlerSIGTERM(self, signum, frame):
         self._daemonRunning = False
@@ -78,6 +101,8 @@ class Daemon(object):
                 raise SystemExit(0)
         except OSError as e:
             raise RuntimeError('fork #2 failed.')
+        
+        self._lock_pid_file()
 
         # Replace file descriptors for stdin, stdout, and stderr
         sys.stdout.flush()
@@ -95,7 +120,7 @@ class Daemon(object):
             print(os.getpid(), file=writePID)
 
         # Arrange to have the PID file removed on exit/signal
-        atexit.register(lambda: os.remove(self.pidFile))
+        atexit.register(self._release_pid_file)
 
     def _getProces(self):
         procs = []
