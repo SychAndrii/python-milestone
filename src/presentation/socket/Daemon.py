@@ -1,4 +1,6 @@
 import os
+import pwd
+import grp
 import time
 import psutil
 import signal
@@ -11,15 +13,15 @@ class Daemon(object):
     - override the run() method
     - start, stop, restart
     @param object
-    @param newUID - unpriviledged UID for daemon
-    @param newGID - unpriviledged GID for daemon
+    @param username - unpriviledged username for daemon
+    @param groupname - unpriviledged group name for daemon
     @param pidFile - the runtime PID file with path
     """
-    def __init__(self, newUID, newGID, pidFile, STDIN='/dev/null', STDOUT='/dev/null', STDERR='/dev/null'):
-        self.ver = 0.4  # version
-        self.pauseRunLoop = 0  # pause between run() calls
-        self.pauseReExec = 1  # pause between death and exec
-        self.pauseDeath = 3  # pause before SIGTERM
+    def __init__(self, username, groupname, pidFile, STDIN='/dev/null', STDOUT='/dev/null', STDERR='/dev/null'):
+        self.ver = 0.4
+        self.pauseRunLoop = 0
+        self.pauseReExec = 1
+        self.pauseDeath = 3
         self.signalReload = False
         self._daemonRunning = True
         self.processName = os.path.basename(sys.argv[0])
@@ -27,14 +29,18 @@ class Daemon(object):
         self.STDOUT = STDOUT
         self.STDERR = STDERR
         self.pidFile = pidFile
-        self.newUID = newUID
-        self.newGID = newGID
+        self.newUID, self.newGID = self.__getUserAndGroupIDs(username, groupname)
 
     def _handlerSIGTERM(self, signum, frame):
         self._daemonRunning = False
 
     def _handlerReExec(self, signum, frame):
         self.signalReload = True
+
+    def __getUserAndGroupIDs(self, username, groupname):
+        uid = pwd.getpwnam(username).pw_uid
+        gid = grp.getgrnam(groupname).gr_gid
+        return uid, gid 
 
     def _daemonize(self):
         """

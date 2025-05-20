@@ -19,7 +19,12 @@ def main():
     if args.mode == "console":
         Console().createTicket(remaining_args)
     elif args.mode == "socket":
-        SocketDaemon().start()
+        daemon = SocketDaemon(
+            "nobody",
+            "nogroup",
+            "/tmp/daemon.pid"
+        )
+        daemon.start()
     else:
         parser.error(f"Unknown mode: {args.mode}")
 

@@ -1,7 +1,4 @@
 import argparse
-from ...services import TicketService
-from ...services.transients import GenerationResponse
-from ...services.converters import LotteryTypeConverter
 from ..GenerateTicketController import GenerateTicketController
 
 

@@ -1,9 +1,6 @@
 import socket
 import json
 from .Daemon import Daemon
-from ...services import TicketService
-from ...services.converters import LotteryTypeConverter
-from ...services.transients.GenerationResponse import GenerationResponse
 from ..GenerateTicketController import GenerateTicketController
 
 
@@ -13,9 +10,9 @@ class SocketDaemon(Daemon):
     handles lottery ticket generation requests from clients.
     """
 
-    def __init__(self, newUID, newGID, pidFile, port,
+    def __init__(self, username, groupname, pidFile, port,
                  STDIN='/dev/null', STDOUT='/dev/null', STDERR='/dev/null'):
-        super().__init__(newUID, newGID, pidFile, STDIN, STDOUT, STDERR)
+        super().__init__(username, groupname, pidFile, STDIN, STDOUT, STDERR)
         self.port = port
 
     def run(self):
