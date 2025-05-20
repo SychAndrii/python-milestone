@@ -1,5 +1,6 @@
 import argparse
 from ...services import TicketService
+from ...models import GenerationRequest
 from ...services.converters import LotteryTypeConverter
 
 
@@ -18,11 +19,11 @@ class Console:
 
         Command-line arguments:
             -t : Type of lottery game (max, grand, or lottario) [required]
-            --id : Identifier for the ticket [required]
+            --id : Identifier for the ticket generation request [required]
             -n : Number of tickets to generate (default = 1) [optional]
 
         Output:
-            Prints the generated ticket(s) to the console.
+            Prints the generated ticket(s) as part of a GenerationRequest.
         """
         parser = argparse.ArgumentParser(
             description="Generate random lottery tickets for OLG games: Lotto Max, Daily Grand, or Lottario."
@@ -46,7 +47,7 @@ class Console:
             "--id",
             type=str,
             required=True,
-            help="Identifier for the ticket (required)"
+            help="Identifier for the ticket generation request (required)"
         )
 
         args = parser.parse_args(argv)
@@ -58,6 +59,8 @@ class Console:
         ticketType = ticketTypeConverter.toTransient(args.t)
 
         service = TicketService()
-        for _ in range(1, args.n + 1):
-            ticket = service.generateTicket(ticketType)
-            print(ticket)
+        tickets = [service.generateTicket(ticketType) for _ in range(args.n)]
+
+        ticketTypeStr = ticketTypeConverter.toString(ticketType)
+        generationRequest = GenerationRequest(args.id, ticketTypeStr, tickets)
+        print(generationRequest)

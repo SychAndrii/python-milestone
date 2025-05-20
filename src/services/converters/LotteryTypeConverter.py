@@ -49,5 +49,5 @@ class LotteryTypeConverter:
         """
         for key, val in self._type_mapping.items():
             if val == lottery_type:
-                return key
+                return key.capitalize()
         raise ValueError(f"Unknown LotteryType: {lottery_type}")

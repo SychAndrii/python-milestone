@@ -20,28 +20,14 @@ class Ticket:
 
     def __str__(self) -> str:
         """
-        Generates and returns a human-readable string representation of the ticket.
-
-        Always displays:
-            - Ticket Type (inferred from first pool name)
-            - All pool numbers with their labels
-
-        Example output:
-            Ticket Type: Lotto Max
-            Lotto Max Numbers: 4 12 15 22 33 44 50
+        Returns a string with the generated numbers for each pool.
 
         Returns:
-            A string representation of the ticket.
+            str: Pool names and sorted numbers.
         """
         lines = []
-
-        ticketType = self.pools[0].name.split()[0]
-        lines.append(f"Ticket Type: {ticketType}")
-
         for pool in self.pools:
             numbers = pool.selectRandomly()
             numbers.sort()
-            numbersStr = " ".join(str(num) for num in numbers)
-            lines.append(f"{pool.name}: {numbersStr}")
-
+            lines.append(f"{pool.name}: {' '.join(str(num) for num in numbers)}")
         return "\n".join(lines)
