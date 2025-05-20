@@ -2,6 +2,7 @@ import argparse
 from ...services import TicketService
 from ...services.transients import GenerationResponse
 from ...services.converters import LotteryTypeConverter
+from ..GenerateTicketController import GenerateTicketController
 
 
 class Console:
@@ -55,12 +56,7 @@ class Console:
         if args.n < 1:
             parser.error("The number of tickets (-n) must be at least 1.")
 
-        ticketTypeConverter = LotteryTypeConverter()
-        ticketType = ticketTypeConverter.toTransient(args.t)
-        ticketTypeStr = ticketTypeConverter.toString(ticketType)
+        generateTicketController = GenerateTicketController(args.id, args.t, args.n)
+        generationResponse = generateTicketController.execute()
 
-        service = TicketService()
-        tickets = [service.generateTicket(ticketType) for _ in range(args.n)]
-
-        generationRequest = GenerationResponse(args.id, ticketTypeStr, tickets)
-        print(generationRequest)
+        print(generationResponse)

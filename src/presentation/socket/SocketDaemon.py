@@ -4,6 +4,7 @@ from .Daemon import Daemon
 from ...services import TicketService
 from ...services.converters import LotteryTypeConverter
 from ...services.transients.GenerationResponse import GenerationResponse
+from ..GenerateTicketController import GenerateTicketController
 
 
 class SocketDaemon(Daemon):
@@ -74,14 +75,9 @@ class SocketDaemon(Daemon):
 
             if count < 1:
                 raise ValueError("'count' must be at least 1")
-
-            converter = LotteryTypeConverter()
-            ticketType = converter.toTransient(typeStr)
-            ticketTypeStr = converter.toString(ticketType)
-
-            service = TicketService()
-            tickets = [service.generateTicket(ticketType) for _ in range(count)]
-            generationResponse = GenerationResponse(requestId, ticketTypeStr, tickets)
+            
+            generateTicketController = GenerateTicketController(requestId, typeStr, count)
+            generationResponse = generateTicketController.execute()
 
             response = str(generationResponse).encode()
             conn.sendall(response)
