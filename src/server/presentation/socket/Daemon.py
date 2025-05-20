@@ -59,8 +59,12 @@ class Daemon(object):
         os.chdir("/tmp")
         os.setsid()
         os.umask(0)
-        os.setuid(self.newUID)
-        os.setgid(self.newGID)
+
+        if os.getuid() == 0:
+            os.setgid(self.newGID)
+            os.setuid(self.newUID)
+        else:
+            print("⚠️ Not running as root — skipping privilege drop to nobody/nogroup.")
 
         # Second fork (relinquish session leadership)
         try:

@@ -10,10 +10,22 @@ class SocketDaemon(Daemon):
     handles lottery ticket generation requests from clients.
     """
 
-    def __init__(self, username, groupname, pidFile, port,
+    def __init__(self, username, groupname, pidFile, port=None,
                  STDIN='/dev/null', STDOUT='/dev/null', STDERR='/dev/null'):
-        super().__init__(username, groupname, pidFile, STDIN, STDOUT, STDERR)
+        if port is None:
+            while True:
+                try:
+                    port_input = input("Enter port number to bind daemon to (1024–65535): ").strip()
+                    port = int(port_input)
+                    if port < 1024 or port > 65535:
+                        print("❌ Port must be between 1024 and 65535.")
+                        continue
+                    break
+                except ValueError:
+                    print("❌ Invalid input. Please enter an integer.")
         self.port = port
+
+        super().__init__(username, groupname, pidFile, STDIN, STDOUT, STDERR)
 
     def run(self):
         """
