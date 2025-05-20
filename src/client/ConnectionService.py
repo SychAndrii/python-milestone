@@ -57,9 +57,6 @@ class ConnectionService:
 
         Args:
             port (int, optional): The port number to use. If None, the user will be prompted.
-
-        Returns:
-            socket.socket: A connected socket object.
         """
         while True:
             try:
@@ -74,12 +71,16 @@ class ConnectionService:
 
             except (socket.gaierror, ConnectionRefusedError, TimeoutError, OSError) as e:
                 self.logger.printError(f"Failed to connect to server: {e}")
-                input("Press Enter to try again...")
+                try:
+                    input("Press Enter to try again...")
+                except KeyboardInterrupt:
+                    self.logger.printError("\nCancelled by user.")
+                    sys.exit(1)
                 self.logger.clear()
-                port = None  # Re-prompt port if invalid or server unavailable
+                port = None
 
             except KeyboardInterrupt:
-                self.logger.printError("\nCancelled by user.")
+                self.logger.printInfo("\nCancelled by user.")
                 sys.exit(1)
 
     def __getValidPort(self):

@@ -48,9 +48,12 @@ class GenerateTicketService:
             raise KeyError("Missing 'requestId' in request object.")
 
         requestId = request["requestId"]
+        response = response.strip()
 
-        if response.strip().startswith("[Error]"):
-            self.loggerService.printError("No file was created due to server-side error.")
+        if response.startswith("[Error]"):
+            message = response[len("[Error]"):].strip()
+            self.loggerService.printError("No file was created due to server-side error:")
+            self.loggerService.printError(message)
         else:
             filename = f"ticket_{requestId}.txt"
             filepath = os.path.join(os.getcwd(), filename)
