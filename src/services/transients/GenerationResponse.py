@@ -1,8 +1,8 @@
 from typing import List
-from .Ticket import Ticket
+from ...models.Ticket import Ticket
 
 
-class GenerationRequest:
+class GenerationResponse:
     """
     Represents a request to generate one or more lottery tickets.
 

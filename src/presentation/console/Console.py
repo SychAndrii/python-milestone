@@ -1,6 +1,6 @@
 import argparse
 from ...services import TicketService
-from ...models import GenerationRequest
+from ...services.transients import GenerationResponse
 from ...services.converters import LotteryTypeConverter
 
 
@@ -57,10 +57,10 @@ class Console:
 
         ticketTypeConverter = LotteryTypeConverter()
         ticketType = ticketTypeConverter.toTransient(args.t)
+        ticketTypeStr = ticketTypeConverter.toString(ticketType)
 
         service = TicketService()
         tickets = [service.generateTicket(ticketType) for _ in range(args.n)]
 
-        ticketTypeStr = ticketTypeConverter.toString(ticketType)
-        generationRequest = GenerationRequest(args.id, ticketTypeStr, tickets)
+        generationRequest = GenerationResponse(args.id, ticketTypeStr, tickets)
         print(generationRequest)
