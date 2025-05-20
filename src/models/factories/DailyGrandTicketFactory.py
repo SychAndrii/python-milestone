@@ -11,9 +11,18 @@ class DailyGrandTicketFactory(ITicketFactory):
         - Select 1 Grand Number from 1 to 7 (inclusive).
     """
 
-    def createTicket(self) -> Ticket:
+    def createTicket(self, id: str) -> Ticket:
+        """
+        Create a Daily Grand ticket with the specified ID.
+
+        Args:
+            id (str): Unique identifier to assign to the ticket.
+
+        Returns:
+            Ticket: A ticket with two pools: main numbers and grand number.
+        """
         pools = [
             Pool("Main Numbers", 1, 49, 5),
             Pool("Grand Number", 1, 7, 1)
         ]
-        return Ticket(pools)
+        return Ticket(id, pools)

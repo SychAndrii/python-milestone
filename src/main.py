@@ -1,19 +1,8 @@
-#!/usr/bin/env python3
-
 import argparse
 from .presentation.console import Console
 from .presentation.socket import SocketDaemon
 
 def main():
-    """
-    Entry point for OLG Lottery Ticket Generator.
-
-    Depending on the selected mode (`console` or `socket`), it starts the appropriate interface.
-
-    Example usage:
-        python -m src.main --mode console
-    """
-
     parser = argparse.ArgumentParser(
         description="OLG Lottery Ticket Generator (Console or Socket mode)"
     )
@@ -25,10 +14,10 @@ def main():
         help="Startup mode: 'console' for CLI interaction, 'socket' to run as a TCP server (default: console)"
     )
 
-    args, _ = parser.parse_known_args()
+    args, remaining_args = parser.parse_known_args()
 
     if args.mode == "console":
-        Console().createTicket()
+        Console().createTicket(remaining_args)
     elif args.mode == "socket":
         SocketDaemon().start()
     else:

@@ -10,6 +10,15 @@ class LottarioTicketFactory(ITicketFactory):
         - Select 6 unique numbers from 1 to 45 (inclusive).
     """
 
-    def createTicket(self) -> Ticket:
+    def createTicket(self, id: str) -> Ticket:
+        """
+        Create a Lottario ticket with the specified ID.
+
+        Args:
+            id (str): Unique identifier to assign to the ticket.
+
+        Returns:
+            Ticket: A ticket with one pool for Lottario numbers.
+        """
         pools = [Pool("Lottario Numbers", 1, 45, 6)]
-        return Ticket(pools)
+        return Ticket(id, pools)

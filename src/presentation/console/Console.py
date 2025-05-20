@@ -1,7 +1,7 @@
 import argparse
 from ...services import TicketService
 from ...services.converters import LotteryTypeConverter
-from ...services.transients.LotteryType import LotteryType
+
 
 class Console:
     """
@@ -11,13 +11,14 @@ class Console:
     and delegates ticket generation to the TicketService.
     """
 
-    def createTicket(self):
+    def createTicket(self, argv):
         """
         Parses command-line arguments and generates the requested number of
         lottery tickets using the appropriate OLG game logic.
 
         Command-line arguments:
             -t : Type of lottery game (max, grand, or lottario) [required]
+            --id : Identifier for the ticket [required]
             -n : Number of tickets to generate (default = 1) [optional]
 
         Output:
@@ -41,15 +42,22 @@ class Console:
             help="Number of tickets to generate (must be 1 or more; default is 1)"
         )
 
-        args = parser.parse_args()
+        parser.add_argument(
+            "--id",
+            type=str,
+            required=True,
+            help="Identifier for the ticket (required)"
+        )
+
+        args = parser.parse_args(argv)
 
         if args.n < 1:
             parser.error("The number of tickets (-n) must be at least 1.")
 
         ticketTypeConverter = LotteryTypeConverter()
         ticketType = ticketTypeConverter.toTransient(args.t)
-        
+
         service = TicketService()
-        for i in range(1, args.n + 1):
-            ticket = service.generateTicket(ticketType)
+        for _ in range(1, args.n + 1):
+            ticket = service.generateTicket(args.id, ticketType)
             print(ticket)

@@ -10,6 +10,15 @@ class LottoMaxTicketFactory(ITicketFactory):
         - Select 7 unique numbers from 1 to 50 (inclusive).
     """
 
-    def createTicket(self) -> Ticket:
+    def createTicket(self, id: str) -> Ticket:
+        """
+        Create a Lotto Max ticket with the specified ID.
+
+        Args:
+            id (str): Unique identifier to assign to the ticket.
+
+        Returns:
+            Ticket: A ticket with one pool for Lotto Max numbers.
+        """
         pools = [Pool("Lotto Max Numbers", 1, 50, 7)]
-        return Ticket(pools)
+        return Ticket(id, pools)
