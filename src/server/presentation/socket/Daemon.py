@@ -13,7 +13,6 @@ class Daemon(object):
     """
     Usage: create a Daemon() subclass
     - override the run() method
-    - start, stop, restart
     @param object
     @param username - unpriviledged username for daemon
     @param groupname - unpriviledged group name for daemon
@@ -150,51 +149,6 @@ class Daemon(object):
             print(message)
             self._daemonize()
             self._infiniteLoop()
-
-    def version(self):
-        message = f"The daemon version {self.ver}"
-        print(message)
-
-    def status(self):
-        procs = self._getProces()
-        if procs:
-            pids = ",".join([str(p.pid) for p in procs])
-            message = f"The daemon is running with PID {pids}."
-            print(message)
-        else:
-            message = "The daemon is not running!"
-            print(message)
-
-    def reload(self):
-        procs = self._getProces()
-        if procs:
-            for p in procs:
-                os.kill(p.pid, signal.SIGHUP)
-                print(f"Send SIGHUP signal into the daemon process with PID {p.pid}.")
-        else:
-            print("The daemon is not running!")
-
-    def stop(self):
-        procs = self._getProces()
-
-        def on_terminate(process):
-            print(f"The daemon process with PID {process.pid} has ended correctly.")
-
-        if procs:
-            for p in procs:
-                p.terminate()
-            gone, alive = psutil.wait_procs(procs, timeout=self.pauseDeath, callback=on_terminate)
-            for p in alive:
-                print(f"The daemon process with PID {p.pid} was killed with SIGTERM!")
-                p.kill()
-        else:
-            print("Cannot find some daemon process, I will do nothing.")
-
-    def restart(self):
-        self.stop()
-        if self.pauseReExec:
-            time.sleep(self.pauseReExec)
-        self.start()
 
     def _infiniteLoop(self):
         try:
