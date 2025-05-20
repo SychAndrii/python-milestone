@@ -12,9 +12,8 @@ class SocketDaemon(Daemon):
     handles lottery ticket generation requests from clients.
     """
 
-    def __init__(self, newUID, newGID, pidFile,
-                 STDIN='/dev/null', STDOUT='/dev/null', STDERR='/dev/null',
-                 port=5000):
+    def __init__(self, newUID, newGID, pidFile, port,
+                 STDIN='/dev/null', STDOUT='/dev/null', STDERR='/dev/null'):
         super().__init__(newUID, newGID, pidFile, STDIN, STDOUT, STDERR)
         self.port = port
 
