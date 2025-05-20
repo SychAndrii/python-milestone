@@ -1,5 +1,5 @@
 """
-Exports presentation classes for the lottery system.
+Exports socket presentation classes for the lottery system.
 """
 
 from .Daemon import Daemon
