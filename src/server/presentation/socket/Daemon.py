@@ -4,6 +4,7 @@ import grp
 import time
 import fcntl
 import psutil
+import resource
 import signal
 import sys
 import atexit
@@ -63,7 +64,7 @@ class Daemon(object):
                 pass
 
     def _handlerReExec(self, signum, frame):
-        self.signalReload = True
+        print("Received SIGHUP — ignoring, nothing to reload.")
 
     def __getUserAndGroupIDs(self, username, groupname):
         uid = pwd.getpwnam(username).pw_uid
@@ -102,6 +103,7 @@ class Daemon(object):
         except OSError as e:
             raise RuntimeError('fork #2 failed.')
         
+        resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
         self._lock_pid_file()
 
         # Replace file descriptors for stdin, stdout, and stderr
@@ -114,10 +116,6 @@ class Daemon(object):
             os.dup2(f.fileno(), sys.stdout.fileno())
         with open(self.STDERR, 'ab', 0) as f:
             os.dup2(f.fileno(), sys.stderr.fileno())
-
-        # Write the PID file
-        with open(self.pidFile, 'w') as writePID:
-            print(os.getpid(), file=writePID)
 
         # Arrange to have the PID file removed on exit/signal
         atexit.register(self._release_pid_file)
