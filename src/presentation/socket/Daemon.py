@@ -2,6 +2,8 @@ import os
 import time
 import psutil
 import signal
+import sys
+import atexit
 
 class Daemon(object):
     """
@@ -25,6 +27,8 @@ class Daemon(object):
         self.STDOUT = STDOUT
         self.STDERR = STDERR
         self.pidFile = pidFile
+        self.newUID = newUID
+        self.newGID = newGID
 
     def _handlerSIGTERM(self, signum, frame):
         self._daemonRunning = False
@@ -36,7 +40,7 @@ class Daemon(object):
         """
         double-fork et al
         """
-        if os.path.exists(pidFile):
+        if os.path.exists(self.pidFile):
             raise RuntimeError('Already running')
 
         try:
@@ -49,8 +53,8 @@ class Daemon(object):
         os.chdir("/tmp")
         os.setsid()
         os.umask(0)
-        os.setuid(newUID)
-        os.setgid(newGID)
+        os.setuid(self.newUID)
+        os.setgid(self.newGID)
 
         # Second fork (relinquish session leadership)
         try:
@@ -106,9 +110,7 @@ class Daemon(object):
         else:
             message = f"Start the daemon version {self.ver}"
             print(message)
-            # Daemonize the main process
             self._daemonize()
-            # Start a infinitive loop that periodically runs run() method
             self._infiniteLoop()
 
     def version(self):
@@ -116,9 +118,6 @@ class Daemon(object):
         print(message)
 
     def status(self):
-        """
-        Get status of the daemon.
-        """
         procs = self._getProces()
         if procs:
             pids = ",".join([str(p.pid) for p in procs])
@@ -129,45 +128,31 @@ class Daemon(object):
             print(message)
 
     def reload(self):
-        """
-        Reload the daemon.
-        """
         procs = self._getProces()
         if procs:
             for p in procs:
                 os.kill(p.pid, signal.SIGHUP)
-                message = f"Send SIGHUP signal into the daemon process with PID {p.pid}."
-                print(message)
+                print(f"Send SIGHUP signal into the daemon process with PID {p.pid}.")
         else:
-            errorMessage = "The daemon is not running!"
-            print(errorMessage)
+            print("The daemon is not running!")
 
     def stop(self):
-        """
-        Stop the daemon.
-        """
         procs = self._getProces()
 
         def on_terminate(process):
-            message = f"The daemon process with PID {process.pid} has ended correctly."
-            print(message)
+            print(f"The daemon process with PID {process.pid} has ended correctly.")
 
         if procs:
             for p in procs:
                 p.terminate()
             gone, alive = psutil.wait_procs(procs, timeout=self.pauseDeath, callback=on_terminate)
             for p in alive:
-                message = f"The daemon process with PID {p.pid} was killed with SIGTERM!"
-                print(message)
+                print(f"The daemon process with PID {p.pid} was killed with SIGTERM!")
                 p.kill()
         else:
-            errorMessage = "Cannot find some daemon process, I will do nothing."
-            print(errorMessage)
+            print("Cannot find some daemon process, I will do nothing.")
 
     def restart(self):
-        """
-        Restart the daemon.
-        """
         self.stop()
         if self.pauseReExec:
             time.sleep(self.pauseReExec)
@@ -181,10 +166,8 @@ class Daemon(object):
                 self.run()
                 time.sleep(self.pauseRunLoop)
         except Exception as e:
-            errorMessage = f"Run method failed: {e}"
-            sys.stderr.write(errorMessage)
+            sys.stderr.write(f"Run method failed: {e}")
             sys.exit(1)
 
-    # this method you have to override
     def run(self):
         pass
