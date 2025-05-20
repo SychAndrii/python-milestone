@@ -2,14 +2,12 @@ from .transients.LotteryType import LotteryType
 from ..models import *
 from ..models.factories import *
 
-
 class TicketService:
     """
     Service class for managing lottery tickets.
 
     This service generates lottery tickets by delegating to the appropriate
-    factory based on the selected LotteryType. Each ticket is associated with
-    a unique identifier provided by the caller.
+    factory based on the selected LotteryType.
     """
 
     def __init__(self):
@@ -18,13 +16,11 @@ class TicketService:
         """
         pass
 
-    def generateTicket(self, id: str, type: LotteryType) -> Ticket:
+    def generateTicket(self, type: LotteryType) -> Ticket:
         """
-        Generate a lottery ticket for the specified type with the given ticket ID.
+        Generate a lottery ticket for the specified type.
 
         Args:
-            id (str): Unique identifier for the ticket being generated. This ID is
-                      embedded in the ticket and can be used for tracking or display.
             type (LotteryType): Enum value specifying the type of lottery game
                                 (e.g., LOTTO_MAX, DAILY_GRAND, LOTTARIO).
 
@@ -46,4 +42,4 @@ class TicketService:
         else:
             raise ValueError(f"Unknown lottery type: {type}")
 
-        return factory.createTicket(id)
+        return factory.createTicket()

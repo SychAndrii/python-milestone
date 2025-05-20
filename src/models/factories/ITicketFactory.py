@@ -5,20 +5,15 @@ class ITicketFactory(ABC):
     """
     Abstract base class for a lottery ticket factory.
 
-    A factory is responsible for generating a complete Ticket for a specific lottery game,
-    using a provided ticket ID to uniquely identify the generated ticket.
+    A factory is responsible for generating a complete Ticket for a specific lottery game.
     """
 
     @abstractmethod
-    def createTicket(self, id: str) -> Ticket:
+    def createTicket(self) -> Ticket:
         """
         Create and return a complete Ticket for this lottery game.
 
-        Args:
-            id (str): Unique identifier to associate with the generated ticket.
-                      This value is embedded into the Ticket object for traceability.
-
         Returns:
-            Ticket: Object containing randomly generated numbers, tagged with the given ID.
+            Ticket: Object containing randomly generated numbers.
         """
         pass

@@ -59,5 +59,5 @@ class Console:
 
         service = TicketService()
         for _ in range(1, args.n + 1):
-            ticket = service.generateTicket(args.id, ticketType)
+            ticket = service.generateTicket(ticketType)
             print(ticket)
