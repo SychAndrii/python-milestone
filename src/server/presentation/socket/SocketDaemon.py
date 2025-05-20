@@ -32,6 +32,7 @@ class SocketDaemon(Daemon):
         Starts the blocking IPv6 socket server and listens for incoming connections.
         """
         sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock = sock
 
         try:
