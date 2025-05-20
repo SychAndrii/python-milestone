@@ -1,4 +1,5 @@
 import os
+import sys
 
 class GenerateTicketService:
     """
@@ -22,15 +23,18 @@ class GenerateTicketService:
         Returns:
             dict: A dictionary containing ticket type, requestId, and count.
         """
-        ticketType = input("Enter ticket type: ").strip()
-        requestId = input("Enter request ID: ").strip()
-        count = input("Enter number of tickets: ").strip()
-
-        return {
-            "type": ticketType,
-            "requestId": requestId,
-            "count": count
-        }
+        try:
+            ticketType = input("Enter ticket type: ").strip()
+            requestId = input("Enter request ID: ").strip()
+            count = input("Enter number of tickets: ").strip()
+            return {
+                "type": ticketType,
+                "requestId": requestId,
+                "count": count
+            }
+        except (KeyboardInterrupt, EOFError):
+            print("\n❌ User cancelled.")
+            sys.exit(1)
 
     def handleResponse(self, request, response):
         """

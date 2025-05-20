@@ -21,12 +21,20 @@ def main():
         Console().createTicket(remaining_args)
 
     elif args.mode == "socket":
-        daemon = SocketDaemon(
-            "nobody",
-            "nogroup",
-            "/tmp/ticket_daemon.pid"
-        )
-        daemon.start()
+        try:
+            daemon = SocketDaemon(
+                username="nobody",
+                groupname="nogroup",
+                pidFile="/tmp/ticket_daemon.pid"
+            )
+            daemon.start()
+
+        except RuntimeError as e:
+            print(f"❌ {e}")
+            sys.exit(1)
+        except KeyboardInterrupt:
+            print("\n❌ User cancelled.")
+            sys.exit(1)
 
 if __name__ == "__main__":
     main()
