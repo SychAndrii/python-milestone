@@ -8,67 +8,85 @@ from ...services.transients.GenerationResponse import GenerationResponse
 
 class SocketDaemon(Daemon):
     """
-    Persistent IPv6 blocking daemon that listens on a specified socket and
-    processes client requests to generate lottery tickets.
+    Persistent IPv6 blocking daemon that listens on a socket and
+    handles lottery ticket generation requests from clients.
     """
 
-    def __init__(self, newUID, newGID, pidFile, STDIN='/dev/null', STDOUT='/dev/null', STDERR='/dev/null', port=5000):
+    def __init__(self, newUID, newGID, pidFile,
+                 STDIN='/dev/null', STDOUT='/dev/null', STDERR='/dev/null',
+                 port=5000):
         super().__init__(newUID, newGID, pidFile, STDIN, STDOUT, STDERR)
         self.port = port
 
     def run(self):
         """
-        Start the persistent IPv6 blocking socket server.
+        Starts the blocking IPv6 socket server and listens for incoming connections.
         """
         sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
         try:
-            sock.bind(("::1", self.port))
+            sock.bind(("localhost", self.port))
             sock.listen(5)
-            print(f"[Daemon] Listening on [::1]:{self.port}")
+            print(f"Listening on [127.0.0.1]:{self.port}")
 
             while self._daemonRunning:
                 conn, addr = sock.accept()
-                print(f"[Daemon] Connection accepted from {addr}")
+                print(f"Connection accepted from {addr}")
                 with conn:
-                    self._handleClient(conn)
+                    self.generateTicket(conn)
 
         except Exception as e:
-            print(f"[Daemon] Socket error: {e}")
+            print(f"Socket error: {e}")
         finally:
             sock.close()
 
-    def _handleClient(self, conn):
+    def generateTicket(self, conn):
         """
-        Handles a single client request from the blocking socket.
-        Expects JSON data from client:
-            {
-                "type": "max" | "grand" | "lottario",
-                "count": <number of tickets>,
-                "requestId": "<string>"
-            }
-        Sends back formatted ticket string.
+        Handles a single client connection.
+
+        Clients must send a JSON request like:
+        {
+            "type": "max" | "grand" | "lottario",
+            "requestId": "<string>",
+            "count": <number of tickets>  (optional, default = 1)
+        }
+
+        The daemon responds with a formatted ticket generation response.
         """
         try:
             raw = conn.recv(4096)
             request = json.loads(raw.decode())
 
+            if "type" not in request:
+                raise ValueError("Missing field: 'type'")
+            if "requestId" not in request:
+                raise ValueError("Missing field: 'requestId'")
+
             typeStr = request["type"]
-            count = int(request["count"])
-            requestId = request["requestId"]
+            requestId = str(request["requestId"]).strip()
+            if not requestId:
+                raise ValueError("'requestId' must not be empty")
+
+            count = request.get("count", 1)
+            try:
+                count = int(count)
+            except (ValueError, TypeError):
+                raise ValueError("'count' must be an integer")
 
             if count < 1:
-                raise ValueError("count must be >= 1")
+                raise ValueError("'count' must be at least 1")
 
-            ticketType = LotteryTypeConverter().toTransient(typeStr)
+            converter = LotteryTypeConverter()
+            ticketType = converter.toTransient(typeStr)
+            ticketTypeStr = converter.toString(ticketType)
+
             service = TicketService()
             tickets = [service.generateTicket(ticketType) for _ in range(count)]
-            generationRequest = GenerationRequest(requestId, typeStr.capitalize(), tickets)
+            generationResponse = GenerationResponse(requestId, ticketTypeStr, tickets)
 
-            response = str(generationRequest).encode()
+            response = str(generationResponse).encode()
             conn.sendall(response)
 
         except Exception as e:
-            errorMsg = f"Error: {str(e)}"
+            errorMsg = f"[Error] {str(e)}"
             conn.sendall(errorMsg.encode())
