@@ -7,15 +7,20 @@ class Ticket:
     Holds the pool configurations and generates numbers when printed.
     """
 
-    def __init__(self, pools: List[Pool]):
+    def __init__(self, id: str, pools: List[Pool]):
         """
-        Initializes the Ticket with a list of Pool configurations.
+        Initializes the Ticket with an id and a list of Pool configurations.
 
         Args:
+            id: id of the ticket.
             pools: list of Pool objects defining the pools for this ticket.
         """
         if not pools:
             raise ValueError("Ticket must contain at least one pool.")
+        if not id:
+            raise ValueError("Ticket ID must not be empty")
+
+        self.id = id
         self.pools = pools
 
     def __str__(self) -> str:
