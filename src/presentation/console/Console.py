@@ -1,6 +1,7 @@
 import argparse
 from ...services import TicketService
-from ...services.LotteryType import LotteryType
+from ...services.converters import LotteryTypeConverter
+from ...services.transients.LotteryType import LotteryType
 
 class Console:
     """
@@ -45,15 +46,10 @@ class Console:
         if args.n < 1:
             parser.error("The number of tickets (-n) must be at least 1.")
 
-        typeMapping = {
-            "max": LotteryType.LOTTO_MAX,
-            "grand": LotteryType.DAILY_GRAND,
-            "lottario": LotteryType.LOTTARIO
-        }
-
-        selectedType = typeMapping[args.t]
+        ticketTypeConverter = LotteryTypeConverter()
+        ticketType = ticketTypeConverter.toTransient(args.t)
+        
         service = TicketService()
-
         for i in range(1, args.n + 1):
-            ticket = service.generateTicket(selectedType)
+            ticket = service.generateTicket(ticketType)
             print(ticket)

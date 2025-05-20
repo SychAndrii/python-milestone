@@ -1,4 +1,4 @@
-from .LotteryType import LotteryType
+from .transients.LotteryType import LotteryType
 from ..models import *
 from ..models.factories import *
 
