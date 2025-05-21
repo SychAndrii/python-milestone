@@ -14,8 +14,8 @@ def main():
         print("  -m console   Run in command-line mode")
         print("  -m socket    Run as a TCP socket daemon")
         print("\nExamples:")
-        print("  python -m src.main -m console -t max --id abc123 -n 2")
-        print("  python -m src.main -m socket")
+        print("  python3 -m src.main -m console -t max --id abc123 -n 2")
+        print("  python3 -m src.main -m socket")
         sys.exit(0)
 
     if args.mode == "console":
