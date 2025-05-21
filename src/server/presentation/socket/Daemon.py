@@ -1,7 +1,6 @@
 import os
 import pwd
 import grp
-import time
 import fcntl
 import psutil
 import resource
@@ -19,11 +18,6 @@ class Daemon(object):
     @param pidFile - the runtime PID file with path
     """
     def __init__(self, username, groupname, pidFile, STDIN='/dev/null', STDOUT='/dev/null', STDERR='/dev/null'):
-        self.ver = 0.4
-        self.pauseRunLoop = 0
-        self.pauseReExec = 1
-        self.pauseDeath = 3
-        self.signalReload = False
         self._daemonRunning = True
         self.processName = os.path.basename(sys.argv[0])
         self.STDIN = STDIN
@@ -84,7 +78,7 @@ class Daemon(object):
         except OSError as e:
             raise RuntimeError('fork #1 failed.')
 
-        os.chdir("/tmp")
+        os.chdir("/")
         os.setsid()
         os.umask(0)
 
@@ -145,18 +139,13 @@ class Daemon(object):
             print(errorMessage)
             sys.exit(1)
         else:
-            message = f"Start the daemon version {self.ver}"
-            print(message)
             self._daemonize()
             self._infiniteLoop()
 
     def _infiniteLoop(self):
         try:
-            if self.pauseRunLoop:
-                time.sleep(self.pauseRunLoop)
             while self._daemonRunning:
                 self.run()
-                time.sleep(self.pauseRunLoop)
         except Exception as e:
             sys.stderr.write(f"Run method failed: {e}")
             sys.exit(1)
