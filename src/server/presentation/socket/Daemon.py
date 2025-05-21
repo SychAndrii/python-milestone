@@ -113,15 +113,6 @@ class Daemon(object):
         # Arrange to have the PID file removed on exit/signal
         atexit.register(self._release_pid_file)
 
-    def _getProces(self):
-        procs = []
-        for p in psutil.process_iter():
-            if self.processName in [part.split('/')[-1] for part in p.cmdline()]:
-                # Skip the current process
-                if p.pid != os.getpid():
-                    procs.append(p)
-        return procs
-
     def start(self):
         """
         Start daemon.
@@ -131,16 +122,8 @@ class Daemon(object):
         signal.signal(signal.SIGTERM, self._handlerSIGTERM)
         signal.signal(signal.SIGHUP, self._handlerReExec)
 
-        # Check if the daemon is already running.
-        procs = self._getProces()
-        if procs:
-            pids = ",".join([str(p.pid) for p in procs])
-            errorMessage = f"Find a previous daemon processes with PIDs {pids}. Is not already the daemon running?"
-            print(errorMessage)
-            sys.exit(1)
-        else:
-            self._daemonize()
-            self._infiniteLoop()
+        self._daemonize()
+        self._infiniteLoop()
 
     def _infiniteLoop(self):
         try:
