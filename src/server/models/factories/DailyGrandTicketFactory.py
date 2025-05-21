@@ -12,6 +12,12 @@ class DailyGrandTicketFactory(ITicketFactory):
     """
 
     def createTicket(self) -> Ticket:
+        """
+        Create a Daily Grand ticket.
+
+        Returns:
+            Ticket: A ticket with two pools: main numbers and grand number.
+        """
         pools = [
             Pool("Main Numbers", 1, 49, 5),
             Pool("Grand Number", 1, 7, 1)

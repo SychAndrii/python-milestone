@@ -11,5 +11,11 @@ class LottarioTicketFactory(ITicketFactory):
     """
 
     def createTicket(self) -> Ticket:
+        """
+        Create a Lottario ticket.
+
+        Returns:
+            Ticket: A ticket with one pool for Lottario numbers.
+        """
         pools = [Pool("Lottario Numbers", 1, 45, 6)]
         return Ticket(pools)

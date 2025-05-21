@@ -11,5 +11,11 @@ class LottoMaxTicketFactory(ITicketFactory):
     """
 
     def createTicket(self) -> Ticket:
+        """
+        Create a Lotto Max ticket.
+
+        Returns:
+            Ticket: A ticket with one pool for Lotto Max numbers.
+        """
         pools = [Pool("Lotto Max Numbers", 1, 50, 7)]
         return Ticket(pools)

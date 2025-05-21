@@ -4,7 +4,8 @@ from ..Ticket import Ticket
 class ITicketFactory(ABC):
     """
     Abstract base class for a lottery ticket factory.
-    A factory is responsible for generating a complete Ticket for a specific game.
+
+    A factory is responsible for generating a complete Ticket for a specific lottery game.
     """
 
     @abstractmethod
@@ -13,6 +14,6 @@ class ITicketFactory(ABC):
         Create and return a complete Ticket for this lottery game.
 
         Returns:
-            Ticket object containing randomly generated numbers.
+            Ticket: Object containing randomly generated numbers.
         """
         pass
