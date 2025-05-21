@@ -8,6 +8,7 @@ import signal
 import sys
 import atexit
 
+# Inspired by the class in the course content.
 class Daemon(object):
     """
     Usage: create a Daemon() subclass
