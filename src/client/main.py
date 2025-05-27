@@ -79,7 +79,11 @@ def main():
 
     try:
         response = connectionService.sendJson(request)
+        if not response.strip():
+            raise ConnectionError("Server closed the connection without sending a response.")
         ticketService.handleResponse(request, response)
+    except ConnectionResetError:
+        loggerService.printError("Connection was reset by the server.")
     except Exception as e:
         loggerService.printError(f"Error while communicating with server: {e}")
 
