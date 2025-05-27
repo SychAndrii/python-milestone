@@ -3,7 +3,7 @@
 #   Assignment:  Milestone 1
 #
 #       Author:  Andrii Sych
-#     Language:  Python. Libraries used: argparse, psutil
+#     Language:  Python. Libraries used: argparse
 #   To Compile:
 #              - Install virtual environment support: 
 #                   Windows: python -m venv venv
