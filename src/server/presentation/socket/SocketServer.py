@@ -1,23 +1,24 @@
 import sys
 import socket
 import json
-from .Daemon import Daemon
 from ..GenerateTicketController import GenerateTicketController
 
 
-class SocketDaemon(Daemon):
+class SocketServer:
     """
-    Persistent IPv6 blocking daemon that listens on a socket and
-    handles lottery ticket generation requests from clients.
+    Persistent IPv6 blocking socket server for lottery ticket generation.
     """
 
-    def __init__(self, username, groupname, pidFile, port=None,
-             STDIN='/dev/null', STDOUT='/dev/null', STDERR='/dev/null'):
+    def __init__(self, port=None):
+        """
+        Initialize the server with the port to listen on.
+        If port is not provided, prompt the user to enter it.
+        """
         if port is None:
             try:
                 while True:
-                    port_input = input("Enter port number to bind daemon to (1024–65535): ").strip()
-                    port = int(port_input)
+                    portInput = input("Enter port number to bind to (1024–65535): ").strip()
+                    port = int(portInput)
                     if port < 1024 or port > 65535:
                         print("❌ Port must be between 1024 and 65535.")
                         continue
@@ -30,44 +31,46 @@ class SocketDaemon(Daemon):
                 sys.exit(1)
 
         self.port = port
-        super().__init__(username, groupname, pidFile, STDIN, STDOUT, STDERR)
+        self.sock = None
 
-    def run(self):
+    def start(self):
         """
-        Starts the blocking IPv6 socket server and listens for incoming connections.
+        Start the server:
+        - Create a socket
+        - Enable address and port reuse options
+        - Bind to localhost
+        - Listen for incoming connections
+        - Process requests in an infinite loop
         """
-        sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.sock = sock
+        self.sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
 
         try:
-            sock.bind(("localhost", self.port))
-            sock.listen(5)
-            print(f"Listening on [127.0.0.1]:{self.port}")
+            self.sock.bind(("::1", self.port))
+            self.sock.listen(5)
+            print(f"Server listening on localhost:{self.port}")
 
-            while self._daemonRunning:
-                conn, addr = sock.accept()
+            while True:
+                conn, addr = self.sock.accept()
                 print(f"Connection accepted from {addr}")
                 with conn:
-                    self.generateTicket(conn)
+                    self.processRequest(conn)
 
         except Exception as e:
             print(f"Socket error: {e}")
         finally:
-            sock.close()
+            if self.sock:
+                self.sock.close()
 
-    def generateTicket(self, conn):
+    def processRequest(self, conn):
         """
-        Handles a single client connection.
-
-        Clients must send a JSON request like:
-        {
-            "type": "max" | "grand" | "lottario",
-            "requestId": "<string>",
-            "count": <number of tickets>  (optional, default = 1)
-        }
-
-        The daemon responds with a formatted ticket generation response.
+        Process a single client connection:
+        - Receive data
+        - Parse JSON request
+        - Validate request fields
+        - Generate the requested tickets
+        - Send back the response
         """
         try:
             raw = conn.recv(4096)
@@ -91,7 +94,7 @@ class SocketDaemon(Daemon):
 
             if count < 1:
                 raise ValueError("'count' must be at least 1")
-            
+
             generateTicketController = GenerateTicketController(requestId, typeStr, count)
             generationResponse = generateTicketController.execute()
 

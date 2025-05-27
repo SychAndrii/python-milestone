@@ -2,10 +2,8 @@
 Exports socket presentation classes for the lottery system.
 """
 
-from .Daemon import Daemon
-from .SocketDaemon import SocketDaemon 
+from .SocketServer import SocketServer 
 
 __all__ = [
-    "Daemon",
-    "SocketDaemon"
+    "SocketServer"
 ]

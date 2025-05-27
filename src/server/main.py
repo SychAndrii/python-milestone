@@ -40,7 +40,7 @@
 #    The application supports two modes of interaction through its presentation layer:
 #
 #       1. **Console** — one-time execution mode using command-line arguments.
-#       2. **SocketDaemon** — a persistent TCP daemon that listens for client requests over IPv6.
+#       2. **SocketServer** — a persistent TCP socket server that listens for client requests over IPv6.
 #
 #    Both modes delegate ticket generation to a shared controller class:
 #    `GenerateTicketController`. This controller encapsulates common presentation logic such as:
@@ -89,7 +89,7 @@
 import sys
 import argparse
 from .presentation.console import Console
-from .presentation.socket import SocketDaemon
+from .presentation.socket import SocketServer
 
 def main():
     initial_parser = argparse.ArgumentParser(add_help=False)
@@ -99,7 +99,7 @@ def main():
     if args.mode is None:
         print("Usage:")
         print("  -m console   Run in command-line mode")
-        print("  -m socket    Run as a TCP socket daemon")
+        print("  -m socket    Run as a TCP socket server (not a daemon)")
         print("\nExamples:")
         print("  python3 -m src.server.main -m console -t max --id abc123 -n 2")
         print("  python3 -m src.server.main -m socket")
@@ -110,11 +110,7 @@ def main():
 
     elif args.mode == "socket":
         try:
-            daemon = SocketDaemon(
-                username="nobody",
-                groupname="nogroup",
-                pidFile="/tmp/ticket_daemon.pid"
-            )
+            daemon = SocketServer()
             daemon.start()
 
         except RuntimeError as e:

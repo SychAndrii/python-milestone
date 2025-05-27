@@ -68,4 +68,5 @@ class GenerateTicketService:
             filepath = os.path.join(responseDir, filename)
             with open(filepath, "w") as f:
                 f.write(response)
-            self.loggerService.printInfo(f"Response saved to {filepath}")
+            self.loggerService.printInfo(f"Response saved to {filepath}\n\n")
+            self.loggerService.printInfo(f"Response:\n{response}")
