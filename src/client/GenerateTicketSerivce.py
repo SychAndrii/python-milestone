@@ -1,53 +1,68 @@
 import os
-import sys
+import random
 
 class GenerateTicketService:
     """
     Service to handle generating and processing lottery ticket requests,
-    including user prompts and saving the server response.
+    including random request generation and saving the server response.
     """
 
     def __init__(self, loggerService):
         """
-        Initialize the service with a logger.
+        Initialize the GenerateTicketService with a logger.
 
         Args:
-            loggerService (LoggingService): Logger for output.
+            loggerService (LoggingService): Logger instance for output messages.
         """
         self.loggerService = loggerService
 
-    def promptRequest(self):
+    def execute(self, connection):
         """
-        Prompt the user to enter ticket request information.
+        Generate a random request, send it via the provided connection, and handle the response.
+
+        Args:
+            connection (Connection): The established connection to the server.
+        """
+        data = self.__generateRequest()
+        response = connection.sendJson(data)
+        self.__handleResponse(data, response)
+
+    def __generateRequest(self):
+        """
+        Generate a random lottery ticket request using only the random module.
+
+        - Randomly selects a ticket type from a predefined list.
+        - Generates a random numeric request ID.
+        - Randomly selects a ticket count within a specified range.
 
         Returns:
-            dict: A dictionary containing ticket type, requestId, and count.
+            dict: A dictionary containing 'type', 'requestId', and 'count' for the request.
         """
-        try:
-            ticketType = input("Enter ticket type: ").strip()
-            requestId = input("Enter request ID: ").strip()
-            count = input("Enter number of tickets: ").strip()
-            return {
-                "type": ticketType,
-                "requestId": requestId,
-                "count": count
-            }
-        except (KeyboardInterrupt, EOFError):
-            print("\n❌ User cancelled.")
-            sys.exit(1)
+        ticketTypes = ["max", "grand", "lottario"]
+        index = random.randint(0, len(ticketTypes) - 1)
+        ticketType = ticketTypes[index]
 
-    def handleResponse(self, request, response):
+        requestId = str(random.randint(100000, 999999))
+        count = random.randint(1, 10)
+
+        return {
+            "type": ticketType,
+            "requestId": requestId,
+            "count": count
+        }
+
+    def __handleResponse(self, request, response):
         """
-        Handle the server response. If it's valid, save it to a file named 
-        ticket_<requestId>.txt inside a "responses" folder located in the same directory as this file.
-        Otherwise, print an error message.
+        Handle the server response. If it's valid, save it to a file named
+        ticket_<requestId>.txt inside a 'responses' folder located in the same directory as this file.
+        If the response indicates an error, log the error without creating a file.
 
         Args:
             request (dict): The original request object containing 'requestId'.
             response (str): The raw response received from the server.
 
         Raises:
-            KeyError: If 'requestId' is not present in the request.
+            KeyError: If 'requestId' is missing in the request dictionary.
         """
         if "requestId" not in request:
             raise KeyError("Missing 'requestId' in request object.")
@@ -64,9 +79,11 @@ class GenerateTicketService:
             responseDir = os.path.join(currentDir, 'responses')
             if not os.path.exists(responseDir):
                 os.makedirs(responseDir)
+
             filename = f"ticket_{requestId}.txt"
             filepath = os.path.join(responseDir, filename)
             with open(filepath, "w") as f:
                 f.write(response)
+
             self.loggerService.printInfo(f"Response saved to {filepath}\n\n")
             self.loggerService.printInfo(f"Response:\n{response}")

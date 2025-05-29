@@ -3,7 +3,7 @@
 #   Assignment:  Milestone 1
 #
 #       Author:  Andrii Sych
-#     Language:  Python. Libraries used: argparse
+#     Language:  Python. Libraries used: argparse, os, socket, signal
 #   To Compile:
 #              - Install virtual environment support: 
 #                   Windows: python -m venv venv
@@ -15,12 +15,12 @@
 #                   Windows: pip install -r requirements.txt
 #                   Linux: sudo pip install --break-system-packages -r requirements.txt
 #              - Run the program: 
-#                   Windows: python -m src.server.main -h
-#                   Linux: sudo python3 -m src.server.main -h
+#                   Windows: python -m src.server.main -m socket
+#                   Linux: sudo python3 -m src.server.main -m socket
 #        Class:  DPI912NSA
 #    Professor:  Harvey Kaduri
-#     Due Date:  2025-05-21
-#    Submitted:  2025-05-21
+#     Due Date:  2025-05-29
+#    Submitted:  2025-05-29
 #
 #-----------------------------------------------------------------------------
 #
@@ -39,53 +39,48 @@
 #
 #    The application supports two modes of interaction through its presentation layer:
 #
-#       1. **Console** — one-time execution mode using command-line arguments.
-#       2. **SocketServer** — a persistent TCP socket server that listens for client requests over IPv6.
+#       1. **Console Mode** — one-time execution mode using command-line arguments.
+#          - The user provides ticket type, request ID, and count via CLI.
+#          - The program generates the requested tickets and prints them to the terminal.
+#
+#       2. **Socket Server Mode** — a persistent TCP socket server that listens for
+#          client requests over IPv6.
+#          - Prompts the user to enter a port number at startup.
+#          - Accepts JSON-formatted requests from clients, each containing:
+#                {
+#                  "type": "max" | "grand" | "lottario",
+#                  "requestId": "<string>",
+#                  "count": <integer>
+#                }
+#          - Forks a child process to handle each request concurrently.
+#          - Sends back a JSON response containing the generated tickets.
+#          - Uses SIGCHLD to reap exited children and prevent zombies.
 #
 #    Both modes delegate ticket generation to a shared controller class:
-#    `GenerateTicketController`. This controller encapsulates common presentation logic such as:
-#        - Mapping the input string to the correct lottery type
-#        - Generating the requested number of tickets using domain services
-#        - Constructing a `GenerationResponse` object
+#    `GenerateTicketController`. This controller encapsulates presentation logic:
+#        - Mapping the input string to the correct lottery type.
+#        - Generating the requested number of tickets using domain services.
+#        - Constructing a `GenerationResponse` object.
 #
-#    This structure avoids duplication and promotes separation of concerns across:
-#        - Domain models (`Pool`, `Ticket`)
-#        - Application services (`TicketService`)
-#        - Presentation interfaces (`Console`, `SocketDaemon`)
+#    Input:
+#        - Console mode: Command-line arguments
+#        - Socket mode: JSON-formatted request sent over an IPv6 socket
 #
-#        Input:
-#            Console Mode:
-#                Command-line arguments:
-#                    -t : type of lottery ("max", "grand", or "lottario") [required]
-#                    --id : request identifier [required]
-#                    -n : number of tickets to generate (default = 1) [optional]
-#
-#            Socket Mode:
-#                JSON request sent over IPv6 socket containing:
-#                    {
-#                      "type": "max" | "grand" | "lottario",
-#                      "requestId": "<string>",
-#                      "count": <integer>
-#                    }
-#
-#        Output:
-#            Console Mode:
-#                - Ticket(s) printed to the terminal.
-#
-#            Socket Mode:
-#                - Response sent back to client.
+#    Output:
+#        - Console mode: Ticket(s) printed to the terminal
+#        - Socket mode: JSON-formatted response sent to client
 #
 #    Algorithm:
-#        The program maps the selected lottery type to a specific factory class.
-#        Each factory creates a Ticket object containing Pool configurations.
-#        Each Pool randomly selects the specified number of unique numbers 
-#        from the defined range. The Ticket object prints or returns the ticket.
+#        - Console mode: parses CLI arguments, calls GenerateTicketController, prints tickets.
+#        - Socket server mode: listens on IPv6, forks children to handle requests,
+#          generates tickets, and sends back responses.
 #
 #   Required Features Not Included: None
 #
 #   Known Bugs: None
 #
 #==============================================================================
+
 import sys
 import argparse
 from .presentation.console import Console
