@@ -93,7 +93,7 @@ class ConnectionService:
         for child in children:
             try:
                 pid, status = os.waitpid(child["pid"], 0)
-                self.logger.printInfo(f"Reaped child process ({child["number"]}) with pid {pid} with exit status {status}.")
+                self.logger.printInfo(f"Reaped child process ({child['number']}) with pid {pid} with exit status {status}.")
             except ChildProcessError:
                 # No more children to reap
                 break
