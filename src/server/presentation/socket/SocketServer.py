@@ -39,7 +39,7 @@ class SocketServer:
         self.port = port
         self.sock = None
 
-    def childProcessCleanup(signum, frame):
+    def childProcessCleanup(self, signum, frame):
         """
         Signal handler for SIGCHLD.
 
@@ -142,7 +142,6 @@ class SocketServer:
         """
         sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
         return sock
 
     def processRequest(self, conn):

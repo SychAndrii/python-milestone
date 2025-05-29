@@ -9,13 +9,14 @@ class Connection:
     Provides methods to connect, send JSON data, and close the connection.
     """
 
-    def __init__(self, serverIP, serverPort):
+    def __init__(self, serverIP, serverPort, number):
         """
         Initialize the Connection instance and validate the IPv6 address and port.
 
         Args:
             serverIP (str): The IPv6 address of the server.
             serverPort (int): The port number of the server.
+            number (int): Identifier of this connection. Can be duplicate across different connections.
 
         Raises:
             ValueError: If the serverIP is not a valid IPv6 address.
@@ -24,6 +25,7 @@ class Connection:
         self.socket = None
         self.serverIP = serverIP
         self.serverPort = serverPort
+        self.number = number
 
         try:
             addrinfo = socket.getaddrinfo(self.serverIP, None, socket.AF_INET6)

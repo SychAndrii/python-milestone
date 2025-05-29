@@ -24,8 +24,8 @@ class GenerateTicketService:
             connection (Connection): The established connection to the server.
         """
         data = self.__generateRequest()
-        response = connection.sendJson(data)
-        self.__handleResponse(data, response)
+        response = connection.sendJSON(data)
+        self.__handleResponse(data, response, f"{connection.number}.txt")
 
     def __generateRequest(self):
         """
@@ -51,7 +51,7 @@ class GenerateTicketService:
             "count": count
         }
 
-    def __handleResponse(self, request, response):
+    def __handleResponse(self, request, response, fileName):
         """
         Handle the server response. If it's valid, save it to a file named
         ticket_<requestId>.txt inside a 'responses' folder located in the same directory as this file.
@@ -60,6 +60,7 @@ class GenerateTicketService:
         Args:
             request (dict): The original request object containing 'requestId'.
             response (str): The raw response received from the server.
+            fileName (str): The name of the file which will contain the response (int the responses directory).
 
         Raises:
             KeyError: If 'requestId' is missing in the request dictionary.
@@ -80,10 +81,8 @@ class GenerateTicketService:
             if not os.path.exists(responseDir):
                 os.makedirs(responseDir)
 
-            filename = f"ticket_{requestId}.txt"
-            filepath = os.path.join(responseDir, filename)
+            filepath = os.path.join(responseDir, fileName)
             with open(filepath, "w") as f:
                 f.write(response)
 
             self.loggerService.printInfo(f"Response saved to {filepath}\n\n")
-            self.loggerService.printInfo(f"Response:\n{response}")

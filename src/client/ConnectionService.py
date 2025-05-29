@@ -1,5 +1,5 @@
 import os
-from Connection import Connection
+from .Connection import Connection
 
 
 class ConnectionService:
@@ -29,25 +29,29 @@ class ConnectionService:
             serverPort (int): The port number on the server to connect to.
             clientConnectionHandler (function): Function to handle the client connection logic.
         """
-        childPIDs = []
+        children = []
 
         for i in range(clientAmount):
             pid = os.fork()
+            exitCode = 0
             if pid == 0:
                 # In child process
+                connection = None
                 try:
                     connection = self.__createConnection(serverIP, serverPort, i)
                     clientConnectionHandler(connection)
                 except Exception as e:
-                    self.logger.printError(f"Error occurred with connection {i}: {e}")
+                    self.logger.printError(f"Error occurred with connection {i}:\n{e}")
+                    exitCode = 1
                 finally:
-                    connection.close()
-                    os._exit(0)
+                    if connection is not None:
+                        connection.close()
+                    os._exit(exitCode)
             else:
                 # Parent process
-                childPIDs.append(pid)
+                children.append({"pid": pid, "number": i })
 
-        self.__reapChildren(childPIDs)
+        self.__reapChildren(children)
 
     def validateIPAndPort(self, serverIP, serverPort):
         """
@@ -60,7 +64,7 @@ class ConnectionService:
         Raises:
             ValueError: If the IPv6 address or port are invalid.
         """
-        Connection(serverIP, serverPort)
+        Connection(serverIP, serverPort, 0)
 
     def __createConnection(self, serverIP, serverPort, connectionNumber):
         """
@@ -74,22 +78,22 @@ class ConnectionService:
         Returns:
             Connection: An established and connected socket wrapper.
         """
-        connection = Connection(serverIP, serverPort)
+        connection = Connection(serverIP, serverPort, connectionNumber)
         connection.connect()
         self.logger.printInfo(f"Connection {connectionNumber} successfully established with {serverIP}:{serverPort}")
         return connection
 
-    def __reapChildren(self, childPIDs):
+    def __reapChildren(self, children):
         """
         Reap all forked child processes to ensure no zombies are left.
 
         Args:
-            childPIDs (list): List of child process IDs to wait for and reap.
+            children (list): List of dictionaries containing process IDs and numbers to wait for and reap.
         """
-        for _ in childPIDs:
+        for child in children:
             try:
-                pid, status = os.wait()
-                self.logger.printInfo(f"[Parent] Reaped child process {pid} with exit status {status}.")
+                pid, status = os.waitpid(child["pid"], 0)
+                self.logger.printInfo(f"Reaped child process ({child["number"]}) with pid {pid} with exit status {status}.")
             except ChildProcessError:
                 # No more children to reap
                 break
