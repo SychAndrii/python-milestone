@@ -10,7 +10,19 @@ from logzero import logger
 
 
 class Daemon(object):
+    """
+    Base class for creating a Unix-style daemon process.
+    Handles daemonization, PID file locking, signal handling, and privilege dropping.
+    """
+
     def __init__(self, username, groupname):
+        """
+        Initialize the Daemon.
+
+        Args:
+            username (str): The system username to drop privileges to.
+            groupname (str): The system groupname to drop privileges to.
+        """
         self._daemonRunning = True
         self.processName = os.path.basename(sys.argv[0])
         self.STDIN = '/dev/null'
@@ -23,6 +35,10 @@ class Daemon(object):
         self.newUID, self.newGID = self.__getUserAndGroupIDs(username, groupname)
 
     def _lock_pid_file(self):
+        """
+        Lock the PID file to ensure only one daemon instance is running.
+        Writes the current PID into the file after acquiring an exclusive lock.
+        """
         logger.debug(f"Attempting to lock PID file at: {self.pidFile}")
         self.pidfile_fd = open(self.pidFile, 'w+')
 
@@ -40,6 +56,10 @@ class Daemon(object):
         logger.debug(f"Wrote PID {os.getpid()} to file.")
 
     def _release_pid_file(self):
+        """
+        Unlock and remove the PID file if it was locked by this process.
+        Registered with atexit to ensure cleanup on termination.
+        """
         if getattr(self, "pidfile_fd", None):
             try:
                 fcntl.flock(self.pidfile_fd.fileno(), fcntl.LOCK_UN)
@@ -51,19 +71,40 @@ class Daemon(object):
                 logger.error(f"Error releasing PID file: {e}")
 
     def _handlerSIGTERM(self, signum, frame):
+        """
+        Signal handler for SIGINT and SIGTERM.
+        Marks the daemon loop for shutdown.
+        """
         logger.info("Received SIGTERM or SIGINT. Shutting down daemon.")
         self._daemonRunning = False
 
     def _handlerReExec(self, signum, frame):
+        """
+        Signal handler for SIGHUP. Currently ignored.
+        """
         logger.info("Received SIGHUP — ignoring, nothing to reload.")
 
     def __getUserAndGroupIDs(self, username, groupname):
+        """
+        Look up UID and GID for the given user and group.
+
+        Args:
+            username (str): System username.
+            groupname (str): System groupname.
+
+        Returns:
+            tuple: (uid, gid)
+        """
         logger.debug(f"Fetching UID and GID for {username}:{groupname}")
         uid = pwd.getpwnam(username).pw_uid
         gid = grp.getgrnam(groupname).gr_gid
         return uid, gid
 
     def _daemonize(self):
+        """
+        Perform the standard Unix double-fork magic.
+        Detaches the process from the terminal and runs it in the background.
+        """
         logger.info("Starting daemonization sequence.")
 
         if os.path.exists(self.pidFile):
@@ -92,9 +133,9 @@ class Daemon(object):
         except OSError as e:
             logger.error(f"Second fork failed: {e}")
             raise RuntimeError('fork #2 failed.')
-        
+
         logger.info(f"UID at point of setuid check: {os.getuid()} (expecting 0)")
-        
+
         if os.getuid() == 0:
             try:
                 os.setgid(self.newGID)
@@ -124,7 +165,7 @@ class Daemon(object):
 
     def stop(self):
         """
-        Stop the daemon by reading the PID file and sending SIGTERM.
+        Stop the daemon by sending SIGTERM to the process with the PID from the PID file.
         """
         if not os.path.exists(self.pidFile):
             logger.warning("PID file does not exist. Is the daemon running?")
@@ -142,6 +183,10 @@ class Daemon(object):
             logger.error(f"Failed to stop daemon: {e}")
 
     def start(self):
+        """
+        Start the daemon process by installing signal handlers,
+        daemonizing the process, and launching the main loop.
+        """
         signal.signal(signal.SIGINT, self._handlerSIGTERM)
         signal.signal(signal.SIGTERM, self._handlerSIGTERM)
         signal.signal(signal.SIGHUP, self._handlerReExec)
@@ -151,6 +196,10 @@ class Daemon(object):
         self._infiniteLoop()
 
     def _infiniteLoop(self):
+        """
+        Run the daemon loop, calling the `run()` method repeatedly
+        until `_daemonRunning` is set to False or an exception occurs.
+        """
         try:
             while self._daemonRunning:
                 self.run()
@@ -159,4 +208,8 @@ class Daemon(object):
             sys.exit(1)
 
     def run(self):
+        """
+        Placeholder for the main logic of the daemon.
+        Should be overridden by subclasses.
+        """
         pass
