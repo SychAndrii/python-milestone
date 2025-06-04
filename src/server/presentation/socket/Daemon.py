@@ -5,19 +5,18 @@ import grp
 import atexit
 import fcntl
 import signal
-import resource
 import logzero
 from logzero import logger
 
 
 class Daemon(object):
-    def __init__(self, username, groupname, pidFile, STDIN='/dev/null', STDOUT='/dev/null', STDERR='/dev/null'):
+    def __init__(self, username, groupname):
         self._daemonRunning = True
         self.processName = os.path.basename(sys.argv[0])
-        self.STDIN = STDIN
-        self.STDOUT = STDOUT
-        self.STDERR = STDERR
-        self.pidFile = pidFile
+        self.STDIN = '/dev/null'
+        self.STDOUT = '/dev/null'
+        self.STDERR = '/dev/null'
+        self.pidFile = '/var/run/socket-daemon.pid'
 
         logzero.logfile("/tmp/socket-daemon-logfile.log", maxBytes=1e6, backupCount=3, disableStderrLogger=True)
         logger.info("Initializing daemon process...")
@@ -109,9 +108,6 @@ class Daemon(object):
             logger.error(f"Second fork failed: {e}")
             raise RuntimeError('fork #2 failed.')
 
-        resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
-        logger.debug("Core dump disabled.")
-
         self._lock_pid_file()
 
         sys.stdout.flush()
@@ -128,6 +124,31 @@ class Daemon(object):
 
         atexit.register(self._release_pid_file)
         logger.info("Daemonization complete. Running main loop...")
+
+    def stop(self):
+        """
+        Stop the daemon by reading the PID file and sending SIGTERM.
+        """
+        if not os.path.exists(self.pidFile):
+            logger.warning("PID file does not exist. Is the daemon running?")
+            return
+
+        try:
+            with open(self.pidFile, 'r') as f:
+                pid = int(f.read().strip())
+            logger.info(f"Stopping daemon process with PID {pid}...")
+            os.kill(pid, signal.SIGTERM)
+            logger.info("SIGTERM sent.")
+        except ProcessLookupError:
+            logger.warning("Process not found. Cleaning up PID file.")
+        except Exception as e:
+            logger.error(f"Failed to stop daemon: {e}")
+        finally:
+            try:
+                os.remove(self.pidFile)
+                logger.info("PID file removed.")
+            except FileNotFoundError:
+                logger.debug("PID file already removed.")
 
     def start(self):
         signal.signal(signal.SIGINT, self._handlerSIGTERM)

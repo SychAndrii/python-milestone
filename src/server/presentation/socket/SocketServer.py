@@ -8,8 +8,8 @@ from .Daemon import Daemon
 
 
 class SocketServer(Daemon):
-    def __init__(self, port, username, groupname, pidFile):
-        super().__init__(username=username, groupname=groupname, pidFile=pidFile)
+    def __init__(self, port, username, groupname):
+        super().__init__(username, groupname)
         self.port = port
         self.sock = None
 
