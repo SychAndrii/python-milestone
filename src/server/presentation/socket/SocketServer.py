@@ -31,6 +31,14 @@ class SocketServer(Daemon):
 
         super().__init__(username, groupname)
 
+    def cleanup(self):
+        try:
+            if self.sock:
+                self.sock.close()
+                logger.debug("Closed socket cleanly.")
+        except:
+            pass
+        
     def run(self):
         """
         Override the Daemon's run() method.

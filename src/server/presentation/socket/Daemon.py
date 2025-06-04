@@ -52,12 +52,7 @@ class Daemon(object):
     def _handlerSIGTERM(self, signum, frame):
         logger.info("Received SIGTERM or SIGINT. Shutting down daemon.")
         self._daemonRunning = False
-        if hasattr(self, "sock"):
-            try:
-                self.sock.close()
-                logger.debug("Closed socket cleanly.")
-            except Exception:
-                pass
+        self.cleanup()
 
     def _handlerReExec(self, signum, frame):
         logger.info("Received SIGHUP — ignoring, nothing to reload.")
@@ -168,4 +163,7 @@ class Daemon(object):
             sys.exit(1)
 
     def run(self):
+        pass
+
+    def cleanup(self):
         pass
