@@ -1,3 +1,2 @@
 logzero==1.7.0
 psutil==7.0.0
-sortedcontainers==2.4.0
