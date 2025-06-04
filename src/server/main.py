@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #==============================================================================
-#   Assignment:  Milestone 1
+#   Assignment:  Milestone 3
 #
 #       Author:  Andrii Sych
 #     Language:  Python. Libraries used: argparse, os, socket, signal
@@ -15,12 +15,12 @@
 #                   Windows: pip install -r requirements.txt
 #                   Linux: sudo pip install --break-system-packages -r requirements.txt
 #              - Run the program: 
-#                   Windows: python -m src.server.main -m socket
-#                   Linux: sudo python3 -m src.server.main -m socket
+#                   Windows: python -m src.server.main -m socket start
+#                   Linux: sudo python3 -m src.server.main -m socket start
 #        Class:  DPI912NSA
 #    Professor:  Harvey Kaduri
-#     Due Date:  2025-05-29
-#    Submitted:  2025-05-29
+#     Due Date:  2025-06-03
+#    Submitted:  2025-06-03
 #
 #-----------------------------------------------------------------------------
 #
@@ -39,13 +39,13 @@
 #
 #    The application supports two modes of interaction through its presentation layer:
 #
-#       1. **Console Mode** — one-time execution mode using command-line arguments.
+#       1. Console Mode — one-time execution mode using command-line arguments.
 #          - The user provides ticket type, request ID, and count via CLI.
 #          - The program generates the requested tickets and prints them to the terminal.
 #
-#       2. **Socket Server Mode** — a persistent TCP socket server that listens for
+#       2. Socket Server Mode — a persistent TCP socket server that listens for
 #          client requests over IPv6.
-#          - Prompts the user to enter a port number at startup.
+#          - Takes "start" or "stop" as arguments to control the daemon.
 #          - Accepts JSON-formatted requests from clients, each containing:
 #                {
 #                  "type": "max" | "grand" | "lottario",
@@ -86,6 +86,7 @@ import argparse
 from .presentation.console import Console
 from .presentation.socket import SocketServer
 
+
 def main():
     initial_parser = argparse.ArgumentParser(add_help=False)
     initial_parser.add_argument("-m", "--mode", choices=["console", "socket"])
@@ -94,19 +95,29 @@ def main():
     if args.mode is None:
         print("Usage:")
         print("  -m console   Run in command-line mode")
-        print("  -m socket    Run as a TCP socket server (not a daemon)")
+        print("  -m socket    Run as a TCP socket server daemon")
         print("\nExamples:")
         print("  python3 -m src.server.main -m console -t max --id abc123 -n 2")
-        print("  python3 -m src.server.main -m socket")
+        print("  python3 -m src.server.main -m socket start")
+        print("  python3 -m src.server.main -m socket stop")
         sys.exit(0)
 
     if args.mode == "console":
         Console().createTicket(remaining_args)
 
     elif args.mode == "socket":
+        if len(remaining_args) == 0 or remaining_args[0] not in ["start", "stop"]:
+            print("Usage: -m socket [start|stop]")
+            sys.exit(1)
+
+        command = remaining_args[0]
         try:
-            daemon = SocketServer()
-            daemon.start()
+            daemon = SocketServer("nobody", "nogroup")
+
+            if command == "start":
+                daemon.start()
+            elif command == "stop":
+                daemon.stop()
 
         except RuntimeError as e:
             print(f"❌ {e}")
@@ -114,6 +125,7 @@ def main():
         except KeyboardInterrupt:
             print("\n❌ User cancelled.")
             sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

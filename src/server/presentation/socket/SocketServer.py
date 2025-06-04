@@ -1,4 +1,5 @@
 import os
+import sys
 import socket
 import json
 import signal
@@ -8,10 +9,27 @@ from .Daemon import Daemon
 
 
 class SocketServer(Daemon):
-    def __init__(self, port, username, groupname):
-        super().__init__(username, groupname)
+    def __init__(self, username, groupname):
+        if port is None:
+            try:
+                while True:
+                    port_input = input("Enter port number to bind daemon to (1024–65535): ").strip()
+                    port = int(port_input)
+                    if port < 1024 or port > 65535:
+                        print("❌ Port must be between 1024 and 65535.")
+                        continue
+                    break
+            except ValueError:
+                print("❌ Invalid input. Please enter an integer.")
+                sys.exit(1)
+            except KeyboardInterrupt:
+                print("\n❌ User cancelled.")
+                sys.exit(1)
+
         self.port = port
         self.sock = None
+
+        super().__init__(username, groupname)
 
     def run(self):
         """
