@@ -9,35 +9,11 @@ from .Daemon import Daemon
 
 
 class SocketServer(Daemon):
-    def __init__(self, username, groupname):
-        if port is None:
-            try:
-                while True:
-                    port_input = input("Enter port number to bind daemon to (1024–65535): ").strip()
-                    port = int(port_input)
-                    if port < 1024 or port > 65535:
-                        print("❌ Port must be between 1024 and 65535.")
-                        continue
-                    break
-            except ValueError:
-                print("❌ Invalid input. Please enter an integer.")
-                sys.exit(1)
-            except KeyboardInterrupt:
-                print("\n❌ User cancelled.")
-                sys.exit(1)
-
-        self.port = port
+    def __init__(self, username, groupname, port):
         self.sock = None
-
+        self.port = port
+        self._socketClosed = False  # Guard to prevent double-close
         super().__init__(username, groupname)
-
-    def cleanup(self):
-        try:
-            if self.sock:
-                self.sock.close()
-                logger.debug("Closed socket cleanly.")
-        except:
-            pass
         
     def run(self):
         """
@@ -57,11 +33,10 @@ class SocketServer(Daemon):
                 else:
                     self.parentProcessConnectionHandler(clientSocket)
         except Exception as e:
-            logger.error(f"Socket error: {e}")
+            if not self._socketClosed:
+                logger.error(f"Socket error: {e}")
         finally:
-            if self.sock:
-                self.sock.close()
-                logger.info("Socket closed.")
+            self._safeCloseSocket()
 
     def createServerSocket(self):
         sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
@@ -85,7 +60,7 @@ class SocketServer(Daemon):
             pass
 
     def childProcessConnectionHandler(self, clientSocket, addr):
-        self.sock.close()
+        self._safeCloseSocket()
         with clientSocket:
             logger.info(f"Connection accepted from {addr}")
             self.processRequest(clientSocket)
@@ -117,3 +92,19 @@ class SocketServer(Daemon):
         except Exception as e:
             errorMsg = f"[Error] {str(e)}"
             conn.sendall(errorMsg.encode())
+
+    def _handlerSIGTERM(self, signum, frame):
+        logger.info("Received SIGTERM or SIGINT. Shutting down socket server.")
+        self._daemonRunning = False
+        self._safeCloseSocket()
+
+    def _safeCloseSocket(self):
+        if self.sock and not self._socketClosed:
+            try:
+                self.sock.close()
+                logger.info("Socket closed.")
+            except Exception as e:
+                logger.warning(f"Failed to close socket: {e}")
+            finally:
+                self._socketClosed = True
+                self.sock = None

@@ -19,8 +19,8 @@
 #                   Linux: sudo python3 -m src.server.main -m socket start
 #        Class:  DPI912NSA
 #    Professor:  Harvey Kaduri
-#     Due Date:  2025-06-03
-#    Submitted:  2025-06-03
+#     Due Date:  2025-06-04
+#    Submitted:  2025-06-04
 #
 #-----------------------------------------------------------------------------
 #
@@ -98,7 +98,7 @@ def main():
         print("  -m socket    Run as a TCP socket server daemon")
         print("\nExamples:")
         print("  python3 -m src.server.main -m console -t max --id abc123 -n 2")
-        print("  python3 -m src.server.main -m socket start")
+        print("  python3 -m src.server.main -m socket start --port 12345")
         print("  python3 -m src.server.main -m socket stop")
         sys.exit(0)
 
@@ -106,17 +106,33 @@ def main():
         Console().createTicket(remaining_args)
 
     elif args.mode == "socket":
-        if len(remaining_args) == 0 or remaining_args[0] not in ["start", "stop"]:
-            print("Usage: -m socket [start|stop]")
+        # Step 1: Parse the command (start or stop)
+        command_parser = argparse.ArgumentParser(add_help=False)
+        command_parser.add_argument("command", choices=["start", "stop"])
+        command_args, remaining = command_parser.parse_known_args(remaining_args)
+
+        # Step 2: Set up full parser depending on command
+        socket_parser = argparse.ArgumentParser()
+        socket_parser.add_argument("command", choices=["start", "stop"], help="Start or stop the daemon")
+
+        if command_args.command == "start":
+            socket_parser.add_argument("--port", type=int, required=True, help="Port number (1024–65000)")
+        else:
+            socket_parser.add_argument("--port", type=int, help="Port number (ignored for stop)")
+
+        socket_args = socket_parser.parse_args(remaining_args)
+
+        if socket_args.command == "start" and not (1024 <= socket_args.port <= 65000):
+            print("❌ Port must be between 1024 and 65000.")
             sys.exit(1)
 
-        command = remaining_args[0]
         try:
-            daemon = SocketServer("nobody", "nogroup")
+            port = socket_args.port if socket_args.command == "start" else None
+            daemon = SocketServer("daemon", "daemon", port)
 
-            if command == "start":
+            if socket_args.command == "start":
                 daemon.start()
-            elif command == "stop":
+            elif socket_args.command == "stop":
                 daemon.stop()
 
         except RuntimeError as e:

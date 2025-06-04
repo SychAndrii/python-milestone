@@ -16,7 +16,7 @@ class Daemon(object):
         self.STDIN = '/dev/null'
         self.STDOUT = '/dev/null'
         self.STDERR = '/dev/null'
-        self.pidFile = '/var/run/socket-daemon.pid'
+        self.pidFile = '/tmp/socket-daemon.pid'
 
         logzero.logfile("/tmp/socket-daemon-logfile.log", maxBytes=1e6, backupCount=3, disableStderrLogger=True)
         logger.info("Initializing daemon process...")
@@ -40,11 +40,12 @@ class Daemon(object):
         logger.debug(f"Wrote PID {os.getpid()} to file.")
 
     def _release_pid_file(self):
-        if self.pidfile_fd:
+        if getattr(self, "pidfile_fd", None):
             try:
                 fcntl.flock(self.pidfile_fd.fileno(), fcntl.LOCK_UN)
                 self.pidfile_fd.close()
-                os.remove(self.pidFile)
+                if os.path.exists(self.pidFile):
+                    os.remove(self.pidFile)
                 logger.info("Released PID file and removed it.")
             except Exception as e:
                 logger.error(f"Error releasing PID file: {e}")
@@ -52,7 +53,6 @@ class Daemon(object):
     def _handlerSIGTERM(self, signum, frame):
         logger.info("Received SIGTERM or SIGINT. Shutting down daemon.")
         self._daemonRunning = False
-        self.cleanup()
 
     def _handlerReExec(self, signum, frame):
         logger.info("Received SIGHUP — ignoring, nothing to reload.")
@@ -84,6 +84,17 @@ class Daemon(object):
         os.umask(0)
         logger.debug("Daemon detached from terminal, new session created.")
 
+        try:
+            pid = os.fork()
+            if pid > 0:
+                logger.debug(f"Second fork succeeded. Parent exiting (PID: {pid}).")
+                raise SystemExit(0)
+        except OSError as e:
+            logger.error(f"Second fork failed: {e}")
+            raise RuntimeError('fork #2 failed.')
+        
+        logger.info(f"UID at point of setuid check: {os.getuid()} (expecting 0)")
+        
         if os.getuid() == 0:
             try:
                 os.setgid(self.newGID)
@@ -93,15 +104,6 @@ class Daemon(object):
                 logger.warning(f"Privilege drop failed: {e}")
         else:
             logger.info("⚠️ Not running as root — skipping privilege drop.")
-
-        try:
-            pid = os.fork()
-            if pid > 0:
-                logger.debug(f"Second fork succeeded. Parent exiting (PID: {pid}).")
-                raise SystemExit(0)
-        except OSError as e:
-            logger.error(f"Second fork failed: {e}")
-            raise RuntimeError('fork #2 failed.')
 
         self._lock_pid_file()
 
@@ -138,12 +140,6 @@ class Daemon(object):
             logger.warning("Process not found. Cleaning up PID file.")
         except Exception as e:
             logger.error(f"Failed to stop daemon: {e}")
-        finally:
-            try:
-                os.remove(self.pidFile)
-                logger.info("PID file removed.")
-            except FileNotFoundError:
-                logger.debug("PID file already removed.")
 
     def start(self):
         signal.signal(signal.SIGINT, self._handlerSIGTERM)
@@ -163,7 +159,4 @@ class Daemon(object):
             sys.exit(1)
 
     def run(self):
-        pass
-
-    def cleanup(self):
         pass
